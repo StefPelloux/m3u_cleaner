@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'm3u_cleaner'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=m3u_cleaner",
+                    "--package=m3u_cleaner"
+                ],
+                "filter": {
+                    "name": "m3u_cleaner",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'm3u_cleaner'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=m3u_cleaner",
+                    "--package=m3u_cleaner"
+                ],
+                "filter": {
+                    "name": "m3u_cleaner",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
