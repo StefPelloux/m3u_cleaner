@@ -137,7 +137,7 @@ impl eframe::App for MyApp {
         });
 
         egui::SidePanel::left("group_list").resizable(true).default_width(300.0).show(ctx, |ui| {
-            ui.vertical_centered_justified(|ui| {
+            ui.vertical(|ui| {
                 ui.heading("Groupes disponibles");
                 ui.separator();
                 ui.horizontal(|ui| {
@@ -145,21 +145,24 @@ impl eframe::App for MyApp {
                     ui.label("Nombre de chaînes");
                     ui.label("Action");
                 });
+                ui.separator();
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     for (group, channels) in &self.groups {
                         ui.horizontal(|ui| {
-                            let mut checked = self.selected_groups.contains(group);
-                            if ui.checkbox(&mut checked, group).clicked() {
-                                if checked {
-                                    self.selected_groups.insert(group.clone());
-                                } else {
-                                    self.selected_groups.remove(group);
+                            ui.group(|ui| {
+                                let mut checked = self.selected_groups.contains(group);
+                                if ui.checkbox(&mut checked, group).clicked() {
+                                    if checked {
+                                        self.selected_groups.insert(group.clone());
+                                    } else {
+                                        self.selected_groups.remove(group);
+                                    }
                                 }
-                            }
-                            ui.label(&format!("{}", channels.len()));
-                            if ui.button("Voir").clicked() {
-                                self.selected_group_name = Some(group.clone());
-                            }
+                                ui.label(&format!("{}", channels.len()));
+                                if ui.button("Voir").clicked() {
+                                    self.selected_group_name = Some(group.clone());
+                                }
+                            });
                         });
                     }
                 });
@@ -167,18 +170,21 @@ impl eframe::App for MyApp {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.vertical_centered_justified(|ui| {
+            ui.vertical(|ui| {
                 ui.heading("Chaînes");
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    if let Some(selected_group_name) = &self.selected_group_name {
-                        if let Some(channels) = self.groups.get(selected_group_name) {
-                            for channel in channels {
-                                ui.label(channel);
+                ui.separator();
+                ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        if let Some(selected_group_name) = &self.selected_group_name {
+                            if let Some(channels) = self.groups.get(selected_group_name) {
+                                for channel in channels {
+                                    ui.label(channel);
+                                }
                             }
+                        } else {
+                            ui.label("Veuillez sélectionner un groupe pour voir les chaînes.");
                         }
-                    } else {
-                        ui.label("Veuillez sélectionner un groupe pour voir les chaînes.");
-                    }
+                    });
                 });
             });
         });
