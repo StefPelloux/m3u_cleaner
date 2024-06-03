@@ -1,7 +1,9 @@
 
 # M3U Cleaner
 
-M3U Cleaner est un outil développé en Rust pour nettoyer les fichiers M3U en permettant de supprimer des groupes de chaînes spécifiques. Il comprend également une interface graphique simple pour une utilisation plus conviviale.
+M3U Cleaner est un petit outil en Rust pour nettoyer les fichiers M3U en permettant de supprimer des groupes de chaînes spécifiques. L'idée et de passer ensuite sur une interface graphique
+Premier test en Rust ..
+
 
 ## Fonctionnalités
 
