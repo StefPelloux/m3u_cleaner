@@ -136,6 +136,8 @@ impl eframe::App for MyApp {
             });
         });
 
+        let max_group_name_length = self.groups.keys().map(|name| name.len()).max().unwrap_or(0);
+        
         egui::SidePanel::left("group_list").resizable(true).default_width(300.0).show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.heading("Groupes disponibles");
@@ -149,28 +151,41 @@ impl eframe::App for MyApp {
                 });
                 ui.separator();
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    for (group, channels) in &self.groups {
-                        ui.horizontal(|ui| {
-                            let mut checked = self.selected_groups.contains(group);
-                            if ui.checkbox(&mut checked, "").clicked() {
-                                if checked {
-                                    self.selected_groups.insert(group.clone());
-                                } else {
-                                    self.selected_groups.remove(group);
-                                }
-                            }
-                            ui.label(group);
-                            ui.label(&format!("{}", channels.len()));
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                                if ui.button("Voir").clicked() {
-                                    self.selected_group_name = Some(group.clone());
-                                }
+                    ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
+                        for (group, channels) in &self.groups {
+                            ui.horizontal(|ui| {
+                                ui.group(|ui| {
+                                    let mut checked = self.selected_groups.contains(group);
+                                    if ui.checkbox(&mut checked, "").clicked() {
+                                        if checked {
+                                            self.selected_groups.insert(group.clone());
+                                        } else {
+                                            self.selected_groups.remove(group);
+                                        }
+                                    }
+
+                                    let padded_group_name = format!("{:width$}", group, width = max_group_name_length + 5);
+                                    ui.label(padded_group_name);
+
+                                    ui.allocate_ui_with_layout(egui::Vec2::new(50.0, 20.0), egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                        ui.label(&format!("{}", channels.len()));
+                                    });
+
+                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                                        if ui.button("Voir").clicked() {
+                                            self.selected_group_name = Some(group.clone());
+                                        }
+                                    });
+                                });
                             });
-                        });
-                    }
+                        }
+                    });
                 });
             });
         });
+
+
+        
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
