@@ -143,22 +143,25 @@ impl eframe::App for MyApp {
                 ui.horizontal(|ui| {
                     ui.label("Nom du Groupe");
                     ui.label("Nombre de chaînes");
-                    ui.label("Action");
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                        ui.label("Action");
+                    });
                 });
                 ui.separator();
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     for (group, channels) in &self.groups {
                         ui.horizontal(|ui| {
-                            ui.group(|ui| {
-                                let mut checked = self.selected_groups.contains(group);
-                                if ui.checkbox(&mut checked, group).clicked() {
-                                    if checked {
-                                        self.selected_groups.insert(group.clone());
-                                    } else {
-                                        self.selected_groups.remove(group);
-                                    }
+                            let mut checked = self.selected_groups.contains(group);
+                            if ui.checkbox(&mut checked, "").clicked() {
+                                if checked {
+                                    self.selected_groups.insert(group.clone());
+                                } else {
+                                    self.selected_groups.remove(group);
                                 }
-                                ui.label(&format!("{}", channels.len()));
+                            }
+                            ui.label(group);
+                            ui.label(&format!("{}", channels.len()));
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                                 if ui.button("Voir").clicked() {
                                     self.selected_group_name = Some(group.clone());
                                 }
@@ -173,8 +176,8 @@ impl eframe::App for MyApp {
             ui.vertical(|ui| {
                 ui.heading("Chaînes");
                 ui.separator();
-                ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
-                    egui::ScrollArea::vertical().show(ui, |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
                         if let Some(selected_group_name) = &self.selected_group_name {
                             if let Some(channels) = self.groups.get(selected_group_name) {
                                 for channel in channels {
