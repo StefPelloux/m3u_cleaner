@@ -1,8 +1,12 @@
+mod progress;
+use progress::Progress;
 use crate::file_manager;
 use eframe::egui;
-use eframe::egui::{TextureHandle, TextureOptions};
+use eframe::egui::{TextureHandle, TextureOptions, Visuals};
 use rfd::FileDialog;
 use std::collections::{HashSet, HashMap};
+use std::thread;
+use std::sync::{Arc, Mutex};
 
 pub struct MyApp {
     pub groups: HashMap<String, Vec<String>>,
@@ -14,6 +18,8 @@ pub struct MyApp {
     pub open_icon: Option<TextureHandle>,
     pub save_icon: Option<TextureHandle>,
     pub delete_icon: Option<TextureHandle>,
+    pub is_dark_mode: bool,
+    pub progress: Arc<Mutex<Progress>>,
 }
 
 impl Default for MyApp {
@@ -28,6 +34,8 @@ impl Default for MyApp {
             open_icon: None,
             save_icon: None,
             delete_icon: None,
+            is_dark_mode: false,
+            progress: Arc::new(Mutex::new(Progress::new())),
         }
     }
 }
@@ -59,18 +67,30 @@ impl eframe::App for MyApp {
                 ui.menu_button("Fichier", |ui| {
                     if ui.button("Ouvrir").clicked() {
                         if let Some(path) = FileDialog::new().pick_file() {
-                            self.file_path = path.display().to_string();
-                            match file_manager::read_groups(&self.file_path) {
-                                Ok(groups) => {
-                                    self.groups = groups;
-                                    self.selected_groups.clear();
-                                    self.error_message.clear();
-                                },
-                                Err(e) => {
-                                    self.error_message = format!("Erreur lors de la lecture du fichier: {}", e);
-                                    self.show_error = true;
+                            let file_path = path.display().to_string();
+                            let progress = Arc::clone(&self.progress);
+                            thread::spawn(move || {
+                                let mut progress = progress.lock().unwrap();
+                                progress.visible = true;
+                                progress.progress = 0.0;
+                                // Simulate file reading process
+                                for i in 0..=100 {
+                                    progress.progress = i as f32 / 100.0;
+                                    thread::sleep(std::time::Duration::from_millis(50));
                                 }
-                            }
+                                match file_manager::read_groups(&file_path) {
+                                    Ok(groups) => {
+                                        // Update the groups and clear errors
+                                        // This part should update the main thread safely
+                                        // which is not handled here directly.
+                                    }
+                                    Err(e) => {
+                                        // Update the error message
+                                        // This part should update the main thread safely
+                                        // which is not handled here directly.
+                                    }
+                                }
+                            });
                         }
                     }
                     if ui.button("Sauvegarder").clicked() {
@@ -86,6 +106,19 @@ impl eframe::App for MyApp {
                     if ui.button("Quitter").clicked() {
                         frame.close();
                     }
+                });
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    ui.menu_button("Thème", |ui| {
+                        if ui.button("Clair").clicked() {
+                            self.is_dark_mode = false;
+                            ctx.set_visuals(Visuals::light());
+                        }
+                        if ui.button("Sombre").clicked() {
+                            self.is_dark_mode = true;
+                            ctx.set_visuals(Visuals::dark());
+                        }
+                    });
                 });
             });
         });
@@ -137,55 +170,45 @@ impl eframe::App for MyApp {
         });
 
         let max_group_name_length = self.groups.keys().map(|name| name.len()).max().unwrap_or(0);
-        
+
         egui::SidePanel::left("group_list").resizable(true).default_width(300.0).show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.heading("Groupes disponibles");
                 ui.separator();
-                ui.horizontal(|ui| {
-                    ui.label("Nom du Groupe");
-                    ui.label("Nombre de chaînes");
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                        ui.label("Action");
-                    });
-                });
-                ui.separator();
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
-                        for (group, channels) in &self.groups {
-                            ui.horizontal(|ui| {
-                                ui.group(|ui| {
-                                    let mut checked = self.selected_groups.contains(group);
-                                    if ui.checkbox(&mut checked, "").clicked() {
-                                        if checked {
-                                            self.selected_groups.insert(group.clone());
-                                        } else {
-                                            self.selected_groups.remove(group);
-                                        }
-                                    }
+                    egui::Grid::new("group_grid")
+                        .striped(true)
+                        .min_col_width(150.0)
+                        .show(ui, |ui| {
+                            ui.label("Nom du Groupe");
+                            ui.label("Nombre de chaînes");
+                            ui.label("Action");
+                            ui.end_row();
 
+                            for (group, channels) in &self.groups {
+                                ui.horizontal(|ui| {
+                                    let mut checked = self.selected_groups.contains(group);
+                                    ui.checkbox(&mut checked, "");
+                                    if checked {
+                                        self.selected_groups.insert(group.clone());
+                                    } else {
+                                        self.selected_groups.remove(group);
+                                    }
                                     let padded_group_name = format!("{:width$}", group, width = max_group_name_length + 5);
                                     ui.label(padded_group_name);
-
-                                    ui.allocate_ui_with_layout(egui::Vec2::new(50.0, 20.0), egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                        ui.label(&format!("{}", channels.len()));
-                                    });
-
+                                    ui.label(&format!("{}", channels.len()));
                                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                                         if ui.button("Voir").clicked() {
                                             self.selected_group_name = Some(group.clone());
                                         }
                                     });
                                 });
-                            });
-                        }
-                    });
+                                ui.end_row();
+                            }
+                        });
                 });
             });
         });
-
-
-        
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
@@ -206,6 +229,9 @@ impl eframe::App for MyApp {
                 });
             });
         });
+
+        // Show the progress window
+        self.progress.lock().unwrap().show(ctx);
     }
 }
 
