@@ -1,13 +1,14 @@
 mod file_manager;
 mod gui;
+//mod icons;
 
 use eframe::egui;
 use eframe::IconData;
 
 fn main() {
     let native_options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(1200.0, 800.0)),
-        icon_data: Some(load_icon("icons/icon.png")),
+        initial_window_size: Some(egui::vec2(1200.0, 600.0)),
+        icon_data: Some(load_icon()),
         ..Default::default()
     };
     eframe::run_native(
@@ -17,17 +18,15 @@ fn main() {
     );
 }
 
-fn load_icon(path: &str) -> IconData {
-    let (icon_rgba, icon_width, icon_height) = {
-        let image = image::open(path).expect("Failed to open icon path").into_rgba8();
-        let (width, height) = image.dimensions();
-        let rgba = image.into_raw();
-        (rgba, width, height)
-    };
+fn load_icon() -> IconData {
+    let image_data = include_bytes!("../icons/icon.png").as_ref();
+    let image = image::load_from_memory(image_data).expect("Failed to load icon from embedded data").into_rgba8();
+    let (width, height) = image.dimensions();
+    let rgba = image.into_raw();
 
     IconData {
-        rgba: icon_rgba,
-        width: icon_width,
-        height: icon_height,
+        rgba,
+        width,
+        height,
     }
 }
