@@ -9,3 +9,10 @@ egui = "0.20"
 eframe = "0.20"
 rfd = "0.12"
 image = "0.24"
+
+[profile.release]
+panic = "abort"
+
+[[bin]]
+name = "m3u_cleaner"
+path = "src/main.rs"

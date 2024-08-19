@@ -1,9 +1,11 @@
+#![windows_subsystem = "windows"]
 mod file_manager;
 mod gui;
 //mod icons;
 
 use eframe::egui;
 use eframe::IconData;
+
 
 fn main() {
     let native_options = eframe::NativeOptions {
