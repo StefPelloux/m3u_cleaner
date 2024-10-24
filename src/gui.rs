@@ -19,6 +19,7 @@ pub struct MyApp {
     pub open_icon: Option<TextureHandle>,
     pub save_icon: Option<TextureHandle>,
     pub delete_icon: Option<TextureHandle>,
+    pub select_icon: Option<TextureHandle>, 
     pub is_dark_mode: bool,
 }
 
@@ -34,6 +35,7 @@ impl Default for MyApp {
             open_icon: None,
             save_icon: None,
             delete_icon: None,
+            select_icon: None,
             is_dark_mode: false,
         }
     }
@@ -50,6 +52,9 @@ impl eframe::App for MyApp {
         }
         if self.delete_icon.is_none() {
             self.delete_icon = Some(load_icon(ctx, include_bytes!("../icons/delete.ico")));
+        }
+        if self.select_icon.is_none() {
+            self.select_icon = Some(load_icon(ctx, include_bytes!("../icons/select.ico")));  // Nouveau bouton
         }
 
         let mut show_error = self.show_error;
@@ -116,6 +121,12 @@ impl eframe::App for MyApp {
                                 self.error_message.clear();
                             }
                         }
+                    }
+                }
+                if let Some(select_icon) = &self.select_icon {
+                    if ui.add(egui::ImageButton::new(select_icon.id(), [24.0, 24.0]))
+                        .on_hover_text("Select FR").clicked() {
+                        self.select_fr_groups();
                     }
                 }
 
@@ -232,6 +243,21 @@ impl MyApp {
             });
         }
     }
+
+    // Ajoutez la nouvelle méthode select_fr_groups ici
+    fn select_fr_groups(&mut self) {
+        let groups = self.groups.lock().unwrap();
+        for group_name in groups.keys() {
+            // Inverser la condition pour sélectionner les groupes qui NE contiennent PAS "FR" ou "France"
+            if !group_name.contains("FR") && !group_name.contains("France") {
+                self.selected_groups.insert(group_name.clone());
+            } else {
+                self.selected_groups.remove(group_name);  // Désélectionner ceux qui contiennent "FR" ou "France"
+            }
+        }
+    }
+
+
 }
 
 // Fonction pour charger les icônes à partir des données intégrées
